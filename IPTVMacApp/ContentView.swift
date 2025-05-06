@@ -1,8 +1,8 @@
-
-// ContentView.swift atualizado com remoção de playlists e retorno de favoritos
+// ContentView.swift atualizado
 
 import SwiftUI
 import AVKit
+import UniformTypeIdentifiers
 
 struct Canal: Identifiable, Codable, Equatable {
     let id = UUID()
@@ -10,7 +10,18 @@ struct Canal: Identifiable, Codable, Equatable {
     let url: String
     let logo: String?
     let qualidade: String?
+    let tvgID: String?
 }
+
+struct ProgramaEPG: Identifiable {
+    let id = UUID()
+    let canalID: String
+    let titulo: String
+    let inicio: Date
+    let fim: Date
+}
+
+
 
 struct ListaIPTV: Identifiable, Codable {
     let id = UUID()
@@ -38,7 +49,9 @@ class AppState: ObservableObject {
             listasSalvas = listas
         }
     }
-
+    
+    
+    
     func salvarEstado() {
         if let data = try? JSONEncoder().encode(favoritos) {
             UserDefaults.standard.set(data, forKey: "favoritos")
@@ -57,6 +70,72 @@ class AppState: ObservableObject {
     }
 }
 
+
+func carregarEPG(from url: URL, completion: @escaping ([ProgramaEPG]) -> Void) {
+    DispatchQueue.global().async {
+        var programas: [ProgramaEPG] = []
+
+        guard let parser = XMLParser(contentsOf: url) else {
+            DispatchQueue.main.async { completion([]) }
+            return
+        }
+
+        class ParserDelegate: NSObject, XMLParserDelegate {
+            var programas: [ProgramaEPG] = []
+            var currentElement = ""
+            var canalID = ""
+            var titulo = ""
+            var inicio = ""
+            var fim = ""
+
+            let formatter: DateFormatter = {
+                let df = DateFormatter()
+                df.dateFormat = "yyyyMMddHHmmss Z"
+                return df
+            }()
+
+            func parser(_ parser: XMLParser, didStartElement elementName: String,
+                        namespaceURI: String?, qualifiedName qName: String?,
+                        attributes attributeDict: [String : String] = [:]) {
+                currentElement = elementName
+
+                if elementName == "programme" {
+                    canalID = attributeDict["channel"] ?? ""
+                    inicio = attributeDict["start"] ?? ""
+                    fim = attributeDict["stop"] ?? ""
+                    titulo = ""
+                }
+            }
+
+            func parser(_ parser: XMLParser, foundCharacters string: String) {
+                if currentElement == "title" {
+                    titulo += string
+                }
+            }
+
+            func parser(_ parser: XMLParser, didEndElement elementName: String,
+                        namespaceURI: String?, qualifiedName qName: String?) {
+                if elementName == "programme" {
+                    if let inicioDate = formatter.date(from: inicio),
+                       let fimDate = formatter.date(from: fim) {
+                        let programa = ProgramaEPG(canalID: canalID, titulo: titulo, inicio: inicioDate, fim: fimDate)
+                        programas.append(programa)
+                    }
+                }
+            }
+        }
+
+        let delegate = ParserDelegate()
+        parser.delegate = delegate
+        parser.parse()
+
+        DispatchQueue.main.async {
+            completion(delegate.programas)
+        }
+    }
+}
+
+
 struct ContentView: View {
     @StateObject private var estado = AppState()
     @State private var buscaTexto = ""
@@ -71,6 +150,23 @@ struct ContentView: View {
     @State private var fullscreenPlayer: Canal?
     @State private var destacarPlayer: Canal?
     @State private var mostrandoFavoritos = false
+    @State private var mostrandoImportador = false
+    @State private var mostrandoImportadorEPG = false
+    @State private var epg: [ProgramaEPG] = []
+    @State private var epgURL = "https://iptv-org.github.io/epg/guides/br.xml"
+
+    func epgParaCanal(_ canal: Canal) -> (String?, String?) {
+        guard let id = canal.tvgID else { return (nil, nil) }
+        let agora = Date()
+        let programasDoCanal = epg
+            .filter { $0.canalID == id }
+            .sorted { $0.inicio < $1.inicio }
+
+        let atual = programasDoCanal.first { $0.inicio <= agora && agora <= $0.fim }
+        let proximo = programasDoCanal.first { $0.inicio > agora }
+
+        return (atual?.titulo, proximo?.titulo)
+    }
 
     var body: some View {
         HStack {
@@ -116,6 +212,25 @@ struct ContentView: View {
                                     .frame(width: 100, height: 100)
                                 }
                                 Text(canal.nome).font(.caption).multilineTextAlignment(.center)
+                                if let (atual, proximo) = epgParaCanal(canal) {
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        if let atual = atual {
+                                            Text("📺 Agora: \(atual)")
+                                                .font(.caption2)
+                                                .foregroundColor(.green)
+                                                .lineLimit(1)
+                                        }
+                                        if let proximo = proximo {
+                                            Text("⏭ Próximo: \(proximo)")
+                                                .font(.caption2)
+                                                .foregroundColor(.yellow)
+                                                .lineLimit(1)
+                                        }
+                                    }
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .padding(.top, 4)
+                                }
+
 
                                 HStack {
                                     Button("▶️ Assistir") {
@@ -143,27 +258,73 @@ struct ContentView: View {
                 Divider()
 
                 VStack {
+                    
                     Text("URL atual:").font(.caption)
-                    TextField("Insira URL da lista M3U", text: $urlAtual)
-                        .textFieldStyle(RoundedBorderTextFieldStyle())
-                        .padding(.horizontal)
+                    
+                    HStack{
+                        TextField("Insira URL da lista M3U", text: $urlAtual)
+                            .textFieldStyle(RoundedBorderTextFieldStyle())
+                            .padding(.horizontal)
 
-                    Button("Carregar Lista IPTV") {
-                        carregarListaM3U(from: urlAtual)
+                        Button("Carregar Lista IPTV") {
+                            carregarListaM3U(from: urlAtual)
+                        }
                     }
+                   
+                    
+                    HStack{
+                       
+
+                        Button("📂 Importar .m3u") {
+                            mostrandoImportador = true
+                        }
+                        .fileImporter(isPresented: $mostrandoImportador, allowedContentTypes: [.plainText]) { result in
+                            do {
+                                let fileURL = try result.get()
+                                let content = try String(contentsOf: fileURL, encoding: .utf8)
+                                let canais = parseM3UContent(content)
+                                estado.canais = canais
+                            } catch {
+                                print("Erro ao importar lista: \(error)")
+                            }
+                        }
+                        
+                        Button("📄 Importar EPG (.xml)") {
+                            mostrandoImportadorEPG = true
+                        }
+                        .fileImporter(isPresented: $mostrandoImportadorEPG, allowedContentTypes: [.xml]) { result in
+                            do {
+                                let fileURL = try result.get()
+                                    carregarEPG(from: fileURL) { programas in
+                                    epg = programas
+                                }
+                            } catch {
+                                print("Erro ao importar EPG: \(error)")
+                            }
+                        }
+                    }
+                    
+                    
 
                     HStack {
                         TextField("Nome da lista", text: $novaListaNome)
                         TextField("URL", text: $novaListaURL)
                         Button("Salvar Lista") {
+                            guard !novaListaNome.isEmpty, !novaListaURL.isEmpty else { return }
                             estado.listasSalvas.append(ListaIPTV(nome: novaListaNome, url: novaListaURL))
                             estado.salvarEstado()
+                            novaListaNome = ""
+                            novaListaURL = ""
                         }
                     }
                     .padding()
 
+                    
+                    Text("LISTAS SALVAS").font(.caption)
                     ScrollView(.horizontal) {
                         HStack {
+                           
+                            
                             ForEach(estado.listasSalvas) { lista in
                                 HStack {
                                     Button(lista.nome) {
@@ -257,44 +418,71 @@ struct ContentView: View {
         URLSession.shared.dataTask(with: url) { data, _, error in
             defer { DispatchQueue.main.async { carregando = false } }
 
-            guard let data = data, error == nil,
-                  let conteudo = String(data: data, encoding: .utf8) else { return }
-
-            let linhas = conteudo.components(separatedBy: .newlines)
-            var nome = ""
-            var logo: String?
-            var qualidade: String?
-            var canais: [Canal] = []
-
-            for i in 0..<linhas.count {
-                let linha = linhas[i]
-                if linha.hasPrefix("#EXTINF") {
-                    if let range = linha.range(of: ",") {
-                        nome = String(linha[range.upperBound...]).trimmingCharacters(in: .whitespaces)
-                    }
-                    if let logoRange = linha.range(of: "tvg-logo=\"") {
-                        let start = linha[logoRange.upperBound...]
-                        if let end = start.range(of: "\"") {
-                            logo = String(start[..<end.lowerBound])
-                        }
-                    }
-                    if linha.contains("HD") || linha.contains("720") {
-                        qualidade = "HD"
-                    } else if linha.contains("SD") || linha.contains("480") {
-                        qualidade = "SD"
-                    } else {
-                        qualidade = "Outros"
-                    }
-                } else if linha.hasPrefix("http") {
-                    canais.append(Canal(nome: nome, url: linha, logo: logo, qualidade: qualidade))
-                }
-                DispatchQueue.main.async {
-                    progresso = Double(i) / Double(linhas.count)
-                }
+            guard let data = data,
+                  let conteudo = String(data: data, encoding: .utf8),
+                  error == nil else {
+                return
             }
+
+            let canais = parseM3UContent(conteudo)
+
             DispatchQueue.main.async {
                 estado.canais = canais
+                progresso = 1.0
             }
+
         }.resume()
     }
+
+    func parseM3UContent(_ content: String) -> [Canal] {
+        var canais: [Canal] = []
+        let linhas = content.components(separatedBy: .newlines)
+        var nome = ""
+        var logo: String?
+        var qualidade: String?
+        var tvgID: String?
+
+        for i in 0..<linhas.count {
+            let linha = linhas[i]
+            if linha.starts(with: "#EXTINF") {
+                nome = ""
+                logo = nil
+                qualidade = "Outros"
+                tvgID = nil
+
+                if let range = linha.range(of: ",") {
+                    nome = String(linha[range.upperBound...]).trimmingCharacters(in: .whitespaces)
+                }
+
+                if let logoRange = linha.range(of: "tvg-logo=\"") {
+                    let start = linha[logoRange.upperBound...]
+                    if let end = start.range(of: "\"") {
+                        logo = String(start[..<end.lowerBound])
+                    }
+                }
+
+                if let idRange = linha.range(of: "tvg-id=\"") {
+                    let start = linha[idRange.upperBound...]
+                    if let end = start.range(of: "\"") {
+                        tvgID = String(start[..<end.lowerBound])
+                    }
+                }
+
+                if linha.contains("HD") || linha.contains("720") || linha.contains("1080") {
+                    qualidade = "HD"
+                } else if linha.contains("SD") || linha.contains("480") {
+                    qualidade = "SD"
+                }
+            } else if linha.starts(with: "http") || linha.starts(with: "rtmp") {
+                canais.append(Canal(nome: nome, url: linha, logo: logo, qualidade: qualidade, tvgID: tvgID))
+            }
+
+            DispatchQueue.main.async {
+                progresso = Double(i) / Double(linhas.count)
+            }
+        }
+
+        return canais
+    }
+
 }
