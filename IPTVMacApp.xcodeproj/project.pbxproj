@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		8A91286B2E3CFEA000EB10C2 /* PlayerController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A91286A2E3CFE9800EB10C2 /* PlayerController.swift */; };
+		8A91286D2E3D232700EB10C2 /* FullscreenPlayerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A91286C2E3D231F00EB10C2 /* FullscreenPlayerView.swift */; };
 		8AEDE3492DC7992000530880 /* IPTVMacAppApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8AEDE3482DC7992000530880 /* IPTVMacAppApp.swift */; };
 		8AEDE34B2DC7992000530880 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8AEDE34A2DC7992000530880 /* ContentView.swift */; };
 		8AEDE34D2DC7992200530880 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 8AEDE34C2DC7992200530880 /* Assets.xcassets */; };
@@ -14,6 +16,8 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		8A91286A2E3CFE9800EB10C2 /* PlayerController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerController.swift; sourceTree = "<group>"; };
+		8A91286C2E3D231F00EB10C2 /* FullscreenPlayerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FullscreenPlayerView.swift; sourceTree = "<group>"; };
 		8AEDE3452DC7991F00530880 /* IPTVMacApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = IPTVMacApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		8AEDE3482DC7992000530880 /* IPTVMacAppApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IPTVMacAppApp.swift; sourceTree = "<group>"; };
 		8AEDE34A2DC7992000530880 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
@@ -52,6 +56,8 @@
 		8AEDE3472DC7991F00530880 /* IPTVMacApp */ = {
 			isa = PBXGroup;
 			children = (
+				8A91286C2E3D231F00EB10C2 /* FullscreenPlayerView.swift */,
+				8A91286A2E3CFE9800EB10C2 /* PlayerController.swift */,
 				8AEDE3482DC7992000530880 /* IPTVMacAppApp.swift */,
 				8AEDE34A2DC7992000530880 /* ContentView.swift */,
 				8AEDE34C2DC7992200530880 /* Assets.xcassets */,
@@ -139,8 +145,10 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				8A91286D2E3D232700EB10C2 /* FullscreenPlayerView.swift in Sources */,
 				8AEDE34B2DC7992000530880 /* ContentView.swift in Sources */,
 				8AEDE3492DC7992000530880 /* IPTVMacAppApp.swift in Sources */,
+				8A91286B2E3CFEA000EB10C2 /* PlayerController.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

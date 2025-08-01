@@ -34,6 +34,7 @@ class AppState: ObservableObject {
     @Published var favoritos: Set<String> = []
     @Published var historico: [Canal] = []
     @Published var listasSalvas: [ListaIPTV] = []
+    
 
     init() {
         if let data = UserDefaults.standard.data(forKey: "favoritos"),
@@ -136,6 +137,36 @@ func carregarEPG(from url: URL, completion: @escaping ([ProgramaEPG]) -> Void) {
 }
 
 
+
+
+
+var fullscreenWindow: NSWindow?
+
+func abrirTelaCheiaCom(url: String) {
+    let window = NSWindow(
+        contentRect: NSMakeRect(0, 0, 800, 600),
+        styleMask: [.titled, .closable, .resizable, .fullSizeContentView],
+        backing: .buffered,
+        defer: false
+    )
+
+    let controller = PlayerController()
+    controller.play(url: url)
+
+    let view = NSHostingView(rootView:
+        FullscreenPlayerView(controller: controller) {
+            controller.stop()
+            window.close()
+        }
+    )
+
+    window.contentView = view
+    window.makeKeyAndOrderFront(nil)
+}
+
+
+
+
 struct ContentView: View {
     @StateObject private var estado = AppState()
     @State private var buscaTexto = ""
@@ -212,7 +243,9 @@ struct ContentView: View {
                                     .frame(width: 100, height: 100)
                                 }
                                 Text(canal.nome).font(.caption).multilineTextAlignment(.center)
-                                if let (atual, proximo) = epgParaCanal(canal) {
+                                let (atual, proximo) = epgParaCanal(canal)
+
+                                if atual != nil || proximo != nil {
                                     VStack(alignment: .leading, spacing: 2) {
                                         if let atual = atual {
                                             Text("📺 Agora: \(atual)")
@@ -278,7 +311,8 @@ struct ContentView: View {
                         Button("📂 Importar .m3u") {
                             mostrandoImportador = true
                         }
-                        .fileImporter(isPresented: $mostrandoImportador, allowedContentTypes: [.plainText]) { result in
+                        .fileImporter(isPresented: $mostrandoImportador, allowedContentTypes: [UTType(filenameExtension: "m3u") ?? .plainText]) { result in
+
                             do {
                                 let fileURL = try result.get()
                                 let content = try String(contentsOf: fileURL, encoding: .utf8)
@@ -348,6 +382,8 @@ struct ContentView: View {
             .frame(minWidth: 420)
 
             if let canal = canalSelecionado {
+                @StateObject var playerController = PlayerController()
+                
                 VStack {
                     Text("Reproduzindo: \(canal.nome)")
                         .font(.headline)
@@ -358,7 +394,8 @@ struct ContentView: View {
                         .padding(.bottom)
                     HStack {
                         Button("🔳 Tela Cheia") {
-                            fullscreenPlayer = canal
+                            playerController.stop()
+                            abrirTelaCheiaCom(url: canal.url)
                         }
                         Button("📤 Destacar") {
                             destacarPlayer = canal
@@ -376,31 +413,7 @@ struct ContentView: View {
             }
         }
         .preferredColorScheme(.dark)
-        .sheet(item: $fullscreenPlayer) { canal in
-            VStack {
-                VideoPlayer(player: AVPlayer(url: URL(string: canal.url)!))
-                    .edgesIgnoringSafeArea(.all)
-                Button("✖️ Fechar") {
-                    fullscreenPlayer = nil
-                }
-            }
-        }
-        .sheet(item: $destacarPlayer) { canal in
-            VStack {
-                VideoPlayer(player: AVPlayer(url: URL(string: canal.url)!))
-                    .frame(minWidth: 600, minHeight: 400)
-                HStack {
-                    Button("📥 Reincorporar") {
-                        destacarPlayer = nil
-                    }
-                    Button("✖️ Fechar") {
-                        destacarPlayer = nil
-                        canalSelecionado = nil
-                    }
-                }
-                .padding()
-            }
-        }
+     
     }
 
     func filtrarCanais() -> [Canal] {

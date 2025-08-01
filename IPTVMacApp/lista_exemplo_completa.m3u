@@ -1,0 +1,43 @@
+#EXTM3U
+
+#EXTINF:-1 tvg-id="globo.sp" tvg-name="Globo SP" tvg-logo="https://logo.clearbit.com/globo.com" group-title="Canais Abertos",Globo SP
+https://stream.example.com/globo-sp.m3u8
+
+#EXTINF:-1 tvg-id="sbt.sp" tvg-name="SBT SP" tvg-logo="https://logo.clearbit.com/sbt.com.br" group-title="Canais Abertos",SBT SP
+https://stream.example.com/sbt-sp.m3u8
+
+#EXTINF:-1 tvg-id="band.sp" tvg-name="Band SP" tvg-logo="https://logo.clearbit.com/band.uol.com.br" group-title="Canais Abertos",Band SP
+https://stream.example.com/band-sp.m3u8
+
+#EXTINF:-1 tvg-id="record.sp" tvg-name="Record SP" tvg-logo="https://logo.clearbit.com/recordtv.r7.com" group-title="Canais Abertos",Record SP
+https://stream.example.com/record-sp.m3u8
+
+#EXTINF:-1 tvg-id="discovery.channel" tvg-name="Discovery Channel" tvg-logo="https://logo.clearbit.com/discoverynetworks.com" group-title="Documentários",Discovery Channel
+https://stream.example.com/discovery.m3u8
+
+#EXTINF:-1 tvg-id="natgeo" tvg-name="NatGeo" tvg-logo="https://logo.clearbit.com/nationalgeographic.com" group-title="Documentários",National Geographic
+https://stream.example.com/natgeo.m3u8
+
+#EXTINF:-1 tvg-id="espn.br" tvg-name="ESPN BR" tvg-logo="https://logo.clearbit.com/espn.com.br" group-title="Esportes",ESPN Brasil
+https://stream.example.com/espn-br.m3u8
+
+#EXTINF:-1 tvg-id="sportv1" tvg-name="SporTV 1" tvg-logo="https://logo.clearbit.com/sportv.globo.com" group-title="Esportes",SporTV 1
+https://stream.example.com/sportv1.m3u8
+
+#EXTINF:-1 tvg-id="telecine.action" tvg-name="Telecine Action" tvg-logo="https://logo.clearbit.com/telecineplay.com.br" group-title="Filmes",Telecine Action
+https://stream.example.com/telecine-action.m3u8
+
+#EXTINF:-1 tvg-id="hbo" tvg-name="HBO" tvg-logo="https://logo.clearbit.com/hbo.com" group-title="Filmes",HBO
+https://stream.example.com/hbo.m3u8
+
+#EXTINF:-1 tvg-id="cartoonnetwork" tvg-name="Cartoon Network" tvg-logo="https://logo.clearbit.com/cartoonnetwork.com" group-title="Infantil",Cartoon Network
+https://stream.example.com/cartoon.m3u8
+
+#EXTINF:-1 tvg-id="disneychannel" tvg-name="Disney Channel" tvg-logo="https://logo.clearbit.com/disney.com" group-title="Infantil",Disney Channel
+https://stream.example.com/disney.m3u8
+
+#EXTINF:-1 tvg-id="cnnint" tvg-name="CNN International" tvg-logo="https://logo.clearbit.com/cnn.com" group-title="Internacional",CNN International
+https://stream.example.com/cnn.m3u8
+
+#EXTINF:-1 tvg-id="bbcworld" tvg-name="BBC World News" tvg-logo="https://logo.clearbit.com/bbc.com" group-title="Internacional",BBC World News
+https://stream.example.com/bbc.m3u8
